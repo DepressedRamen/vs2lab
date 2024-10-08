@@ -33,14 +33,17 @@ class Client:
         self.chan.send_to(self.server, msglst)  # send msg to server
         
         msgrcv_ack = self.chan.receive_from(self.server) # type: ignore
-        print("Ergebnis der Ack-Antwort: ", msgrcv_ack[1])
+        print("Result of the ack: ", msgrcv_ack[1])
 
         thread = AsyncAppend(self.chan, self.server, callback) #make append obj.
         thread.start()      #start thread
         i = 0 
-        while (not thread.done): #printing output to show that the client is still active
+        while (i<20): #printing output to show that the client is still active
+            if thread.done:
+                break
             print("client is waiting")
             time.sleep(1)
+            i += 1
         thread.join()            
         
         """msgrcv = self.chan.receive_from(self.server)  # wait for response

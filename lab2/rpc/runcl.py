@@ -4,8 +4,8 @@ import logging
 from context import lab_logging
 
 def callback(msg):
-    print("Ergebnis in Callback-Funktion")
-    print("Inhalt der Nachricht :" ,msg.value)
+    print("Received message from server")
+    print("Content of the message:" ,msg.value)
 
 lab_logging.setup(stream_level=logging.INFO)
 
