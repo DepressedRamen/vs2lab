@@ -147,12 +147,35 @@ class ChordNode:
                 break
 
             if request[0] == constChord.LOOKUP_REQ:  # A lookup request
+                baseSender = request[2] # The original sender added by us
+                
                 self.logger.info("Node {:04n} received LOOKUP {:04n} from {:04n}."
                                  .format(self.node_id, int(request[1]), int(sender)))
 
                 # look up and return local successor 
                 next_id: int = self.local_successor_node(request[1])
-                self.channel.send_to([sender], (constChord.LOOKUP_REP, next_id))
+                
+                ########################################
+                #region OUR CODE 
+                ########################################    
+                
+                predecessor = self.finger_table[0]
+                
+                if((self.node_id >= request[1] and predecessor < request[1]) or (self.node_id == request[1])):
+                    #current node must be the one that is being looked up
+                    print("\nLOOKUP Received: Current ID: " + str(self.node_id))
+                    print("Matching Endpoint Found: " + str(self.node_id) + " for Key " + str(request[1]))
+                    print("Sender: " + str(sender))
+                    self.channel.send_to([str(baseSender)], (constChord.LOOKUP_REP, request[1], baseSender))
+                    print("Sent")
+                else:
+                    #if the current node is not the one that is being looked up
+                    #send the request to the next node
+                    print("\nLOOKUP Received: Current ID: " + str(self.node_id) + ", Next ID is: " + str(next_id))
+                    self.channel.send_to([str(next_id)], (constChord.LOOKUP_REQ, request[1], baseSender))
+                ########################################
+                #endregion OUR CODE
+                ########################################
 
                 # Finally do a sanity check
                 if not self.channel.exists(next_id):  # probe for existence

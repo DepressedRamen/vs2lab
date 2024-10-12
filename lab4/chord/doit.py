@@ -15,6 +15,8 @@ import chordnode as chord_node
 import constChord
 from context import lab_channel, lab_logging
 
+from random import randint
+
 lab_logging.setup(stream_level=logging.INFO)
 
 
@@ -29,7 +31,31 @@ class DummyChordClient:
         self.channel.bind(self.node_id)
 
     def run(self):
-        print("Implement me pls...")
+        ########################################################
+        #region OUR CODE 
+        ########################################################
+        #Get all nodes
+        nodes = self.channel.channel.smembers('node')
+        nodes = list(map(lambda x: int(x.decode('utf-8')), nodes))
+        
+        #Get a random node to look in 
+        randomNode = randint(0, 100)
+        while(randomNode not in nodes):
+            randomNode = randint(0, 100)
+            
+        #Generate a random key to look for    
+        randomKey = randint(0, self.channel.MAXPROC)
+        
+        # send request to random node with random key
+        print(f"\nNode {self.node_id} is looking for random Key {randomKey} on Node {randomNode}\n")
+        self.channel.send_to([str(randomNode)], (constChord.LOOKUP_REQ, randomKey, self.node_id))
+        
+        answer = self.channel.receive_from_any()[1]
+        print(f"Received: {answer}")
+        ########################################################
+        #endregion OUR CODE
+        ########################################################
+        
         self.channel.send_to(  # a final multicast
             {i.decode() for i in list(self.channel.channel.smembers('node'))},
             constChord.STOP)
