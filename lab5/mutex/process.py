@@ -1,8 +1,9 @@
 import logging
 import random
 import time
+import threading
 
-from constMutex import ENTER, RELEASE, ALLOW
+from constMutex import ENTER, RELEASE, ALLOW, IS_ALIVE, ALIVE
 
 
 class Process:
@@ -40,6 +41,7 @@ class Process:
         self.queue = []  # The request queue list
         self.clock = 0  # The current logical clock
         self.logger = logging.getLogger("vs2lab.lab5.mutex.process.Process")
+        self.responsive_processes = []  # List of responsive processes
 
     def __mapid(self, id='-1'):
         # resolve channel member address to a human friendly identifier
@@ -86,7 +88,8 @@ class Process:
         processes_with_later_message = set([req[1] for req in self.queue[1:]])
         # Access granted if this process is first in queue and all others have answered (logically) later
         first_in_queue = self.queue[0][1] == self.process_id
-        all_have_answered = len(self.other_processes) == len(processes_with_later_message)
+        
+        all_have_answered = len(self.other_processes) <= len(processes_with_later_message)
         return first_in_queue and all_have_answered
 
     def __receive(self):
@@ -114,10 +117,45 @@ class Process:
                 # assure release requester indeed has access (his ENTER is first in queue)
                 assert self.queue[0][1] == msg[1] and self.queue[0][2] == ENTER, 'State error: inconsistent remote RELEASE'
                 del (self.queue[0])  # Just remove first message
+            #############################
+            # OUR CODE
+            #############################
+            elif msg[2] == IS_ALIVE:
+                self.clock = self.clock + 1  # Increment clock value
+                alive_response = (self.clock, self.process_id, ALIVE)
+                self.channel.send_to([msg[1]], alive_response)
+            elif msg[2] == ALIVE:
+                self.responsive_processes.add(msg[1])  # Add process to responsive set
 
             self.__cleanup_queue()  # Finally sort and cleanup the queue
         else:        
             self.logger.warning("{} timed out on RECEIVE.".format(self.__mapid()))
+            self._is_alive()
+            
+    def _update_responsive_processes(self): 
+        time.sleep(5) # Wait for 5 seconds
+        self.other_processes = list(self.responsive_processes)
+        self.all_processes = list(self.responsive_processes)
+        self.all_processes.append(self.process_id)
+        self.all_processes.sort(key=lambda x: int(x))
+        print("Alive processes: " + str(self.all_processes))
+        
+        self.queue = [msg for msg in self.queue if msg[1] in self.all_processes]
+        self.__cleanup_queue()
+
+    def _is_alive(self):
+        self.clock = self.clock + 1  # Increment clock value
+        alive_message = (self.clock, self.process_id, IS_ALIVE)
+        self.queue.append(alive_message)  # Append request to queue
+        self.__cleanup_queue()
+        self.channel.send_to(self.other_processes, alive_message)
+        self.responsive_processes = set() # Reset the set of responsive processes
+        TimerThread = threading.Thread(target=self._update_responsive_processes)
+        TimerThread.start()
+        #############################
+        # OUR CODE 
+        #############################
+    
 
     def init(self):
         self.channel.bind(self.process_id)
@@ -133,6 +171,8 @@ class Process:
                          .format(self.process_id, self.__mapid()))
 
     def run(self):
+        #Process main loop
+        #Process descides to enter CS randomly or to serve requests
         while True:
             # Enter the critical section if there are more than one process left
             # and random is true
@@ -157,6 +197,6 @@ class Process:
                 self.__release()
                 continue
 
-            # Occasionally serve requests to enter (
+            # Occasionally serve requests to enter
             if random.choice([True, False]):
                 self.__receive()
