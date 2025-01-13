@@ -39,6 +39,7 @@ class Server:
         "Christian": "678-901-2345",
         "Patrick": "789-012-3456",
         "Johannes": "890-123-4567",
+        "Björn" : "123-456-7890",
     }
 
     def __init__(self):
@@ -67,13 +68,13 @@ class Server:
         self.sock.close()
         self._logger.info("Server down.")
 
+    ### OUR CODE ###
     def receiveGet(self): 
         self.sock.listen(1)
         self._logger.info("Server started")
         
         while self._serving:  # as long as _serving (checked after connections or socket timeouts)
                 try:
-                    # pylint: disable=unused-variable
                     (connection, address) = self.sock.accept()  # returns new socket and address of client
                     while True:  # forever
                         data = connection.recv(1024)  # receive data from client
@@ -94,6 +95,8 @@ class Server:
                     pass  # ignore timeouts
         self.sock.close()
         self._logger.info("Server down.")
+        
+    ### OUR CODE ###
 
 class Client:
     """ The client """
@@ -118,6 +121,7 @@ class Client:
         """ Close socket """
         self.sock.close()
         
+    ### OUR CODE ###	
     def send(self,msg_in='Tim'):
         """ Send message to server """
         self.logger.info("Client sent: " + msg_in)
@@ -137,3 +141,4 @@ class Client:
     def getall(self):
         """ Get all numbers"""
         return self.send('getall')
+    ### OUR CODE ###	

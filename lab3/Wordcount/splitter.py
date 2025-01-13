@@ -22,10 +22,10 @@ with open("words.txt") as file:
 time.sleep(20)
 
 #iterate over lines
-for i,line in enumerate(content):
+for line in content:
   #lines in lowercase and wihtout special characters
   line = line.lower()
-  line = re.sub('[!@#$:,.„“,?]', '', line)
+  line = re.sub('[!@#$:,.„“,?()]', '', line)
   #send line to the mappers
   print(line)
   push_socket.send_string(line)

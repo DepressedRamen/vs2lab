@@ -1,5 +1,4 @@
 import sys
-import time
 import zmq
 import constWC
 
@@ -25,8 +24,8 @@ sendTo2 = 0
 while True:
     s = receiver.recv_string()
     #if word starts with a-m send to red1 else send to red2
-    for word in s.split():
-        if 97 <= ord(word[0].lower()) <= 109:
+    for word in s.split():  
+        if 97 <= ord(word[0]) <= 109:
             red1.send_string(word)
             sendTo1+=1
         else:

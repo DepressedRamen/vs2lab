@@ -32,19 +32,15 @@ class Client:
         msglst = (constRPC.APPEND, data, db_list)  # message payload
         self.chan.send_to(self.server, msglst)  # send msg to server
         
+        ### OUR CODE ###
         msgrcv_ack = self.chan.receive_from(self.server) # type: ignore
         print("Result of the ack: ", msgrcv_ack[1])
 
         thread = AsyncAppend(self.chan, self.server, callback) #make append obj.
         thread.start()      #start thread
-        i = 0 
-        while (i<20): #printing output to show that the client is still active
-            if thread.done:
-                break
-            print("client is waiting")
-            time.sleep(1)
-            i += 1
-        thread.join()            
+
+   
+               
         
         """msgrcv = self.chan.receive_from(self.server)  # wait for response
         return msgrcv[1]  # pass it to caller"""
@@ -54,7 +50,7 @@ class AsyncAppend(threading.Thread):
         threading.Thread.__init__(self)
         self.chan = chan
         self.server = server
-        self.done = False
+        self.done = threading.Event()
         self.callback = callback
 
     def run(self):
@@ -62,8 +58,11 @@ class AsyncAppend(threading.Thread):
         # wait for response --> Hier Thread
         msgrcv = self.chan.receive_from(self.server) # receive response
         print('asynch_append receive done') 
-        self.done = True
+        self.done.set() # set done flag
         self.callback(msgrcv[1]) # call callback function
+        
+        
+        ### OUR CODE ###
 
 class Server:
     def __init__(self):
@@ -85,12 +84,16 @@ class Server:
                 msgrpc = msgreq[1]  # fetch call & parameters
                 # check what is being requested
                 if constRPC.APPEND == msgrpc[0]:
+                    
+                    ### OUR CODE ###
                     # server received request
                     self.chan.send_to({client}, "acknowledge")
                     # wait 10 seconds to simulate prolonged processing time
                     for i in range(10):
                         print("Server is working")
                         time.sleep(1)
+                        
+                    ### OUR CODE ###
                     result = self.append(msgrpc[1], msgrpc[2])  # do local call
                     self.chan.send_to({client}, result)  # return response
                 else:

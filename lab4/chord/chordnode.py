@@ -166,7 +166,8 @@ class ChordNode:
                     print("\nLOOKUP Received: Current ID: " + str(self.node_id))
                     print("Matching Endpoint Found: " + str(self.node_id) + " for Key " + str(request[1]))
                     print("Sender: " + str(sender))
-                    self.channel.send_to([str(baseSender)], (constChord.LOOKUP_REP, request[1], baseSender))
+                    print("Base Sender: " + str(baseSender))
+                    self.channel.send_to([str(baseSender)], (constChord.LOOKUP_REP, self.node_id, baseSender))
                     print("Sent")
                 else:
                     #if the current node is not the one that is being looked up

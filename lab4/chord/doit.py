@@ -44,7 +44,7 @@ class DummyChordClient:
             randomNode = randint(0, 100)
             
         #Generate a random key to look for    
-        randomKey = randint(0, self.channel.MAXPROC)
+        randomKey = randint(0, pow(2, 6))
         
         # send request to random node with random key
         print(f"\nNode {self.node_id} is looking for random Key {randomKey} on Node {randomNode}\n")
